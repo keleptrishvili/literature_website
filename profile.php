@@ -19,7 +19,7 @@ $reviews_query = "SELECT r.rating, b.title, g.name AS genre_name, b.book_id
                  ORDER BY r.review_id DESC";
 $reviews = $conn->query($reviews_query);
 
-// Get statistics
+
 $stats_query = "SELECT COUNT(*) as total_reviews, AVG(rating) as avg_given_rating FROM reviews WHERE user_id = $user_id";
 $stats = $conn->query($stats_query)->fetch_assoc();
 ?>

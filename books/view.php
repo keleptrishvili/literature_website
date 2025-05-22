@@ -2,14 +2,13 @@
 include '../includes/header.php';
 include '../includes/db.php';
 
-// გამართვისთვის შეცდომების ჩვენება
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// მიიღე book_id GET პარამეტრიდან
 $book_id = isset($_GET['book_id']) ? (int)$_GET['book_id'] : 0;
 
-// SQL მოთხოვნა prepared statement-ით
+
 $query = "SELECT b.title, b.description, b.file_url, b.books_img, a.name AS author_name, g.name AS genre_name
           FROM books b
           JOIN authors a ON b.author_id = a.author_id
@@ -27,7 +26,6 @@ if ($book_result && $book_result->num_rows > 0) {
 }
 $stmt->close();
 
-// საშუალო რეიტინგის გამოთვლა
 $avg_rating_query = "SELECT AVG(rating) AS avg_rating FROM reviews WHERE book_id = ?";
 $stmt = $conn->prepare($avg_rating_query);
 $stmt->bind_param("i", $book_id);
@@ -36,7 +34,7 @@ $avg_rating_result = $stmt->get_result();
 $avg_rating = $avg_rating_result ? $avg_rating_result->fetch_assoc()['avg_rating'] : null;
 $stmt->close();
 
-// მიმოხილვების მოთხოვნა
+
 $review_query = "SELECT r.rating, u.username
                  FROM reviews r
                  JOIN users u ON r.user_id = u.user_id
@@ -47,7 +45,6 @@ $stmt->execute();
 $reviews = $stmt->get_result();
 $stmt->close();
 
-// შეამოწმე, აქვს თუ არა მომხმარებელს ამ წიგნზე მიმოხილვა
 $user_review = null;
 if (isset($_SESSION['user_id'])) {
     $user_review_query = "SELECT rating FROM reviews WHERE user_id = ? AND book_id = ?";
@@ -61,7 +58,7 @@ if (isset($_SESSION['user_id'])) {
     $stmt->close();
 }
 
-// შეტყობინებების მიღება
+
 $success = isset($_GET['success']) ? htmlspecialchars($_GET['success']) : '';
 $error = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : '';
 ?>
@@ -71,7 +68,7 @@ $error = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : '';
 <p><strong>ჟანრი:</strong> <?php echo htmlspecialchars($book['genre_name']); ?></p>
 
 <?php
-// სურათის გზის გამართვა
+
 $image_path = !empty($book['books_img']) ? "../uploads/" . htmlspecialchars($book['books_img']) : '';
 $image_exists = $image_path && file_exists($image_path);
 ?>
