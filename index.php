@@ -2,9 +2,11 @@
 include 'includes/header.php';
 include 'includes/db.php';
 
+// ფილტრაციის პარამეტრების მიღება
 $search = isset($_GET['search']) ? $conn->real_escape_string($_GET['search']) : '';
 $genre_filter = isset($_GET['genre']) ? $conn->real_escape_string($_GET['genre']) : '';
 
+// ძირითადი წიგნების სიის მოთხოვნა
 $query = "SELECT b.book_id, b.title, b.books_img, a.name AS author_name, g.name AS genre_name, AVG(r.rating) AS avg_rating
           FROM books b
           JOIN authors a ON b.author_id = a.author_id
@@ -24,12 +26,12 @@ if (!empty($where_clauses)) {
 }
 
 $query .= " GROUP BY b.book_id";
-
 $result = $conn->query($query);
 ?>
 
 <h1>Welcome to the Literature Site</h1>
 
+<!-- ფილტრაციის ფორმა -->
 <form action="index.php" method="GET" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
     <input type="text" name="search" placeholder="Search books..." value="<?php echo htmlspecialchars($search); ?>" style="padding: 10px; flex: 1;">
     <select name="genre" style="padding: 10px; flex: 1;">
@@ -46,6 +48,56 @@ $result = $conn->query($query);
     <button type="submit" style="padding: 10px; background-color: #2c3e50; color: white; border: none; cursor: pointer;">Filter</button>
 </form>
 
+<!-- Top Rated Books სექცია (მხოლოდ თუ ძებნა და ფილტრი ცარიელია) -->
+<?php if (empty($search) && empty($genre_filter)): ?>
+    <h2>Top Rated Books</h2>
+    <?php
+    $top_rated_query = "SELECT b.book_id, b.title, b.books_img, a.name AS author_name, g.name AS genre_name, AVG(r.rating) AS avg_rating
+                        FROM books b
+                        JOIN authors a ON b.author_id = a.author_id
+                        JOIN genres g ON b.genre_id = g.genres_id
+                        LEFT JOIN reviews r ON b.book_id = r.book_id
+                        GROUP BY b.book_id
+                        HAVING avg_rating IS NOT NULL
+                        ORDER BY avg_rating DESC
+                        LIMIT 5";
+    $top_rated_result = $conn->query($top_rated_query);
+    ?>
+    <table>
+        <tr>
+            <th>Image</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Genre</th>
+            <th>Average Rating</th>
+            <th>Action</th>
+        </tr>
+        <?php if ($top_rated_result->num_rows > 0): ?>
+            <?php while ($row = $top_rated_result->fetch_assoc()): ?>
+                <tr>
+                    <td>
+                        <?php if (!empty($row['books_img'])): ?>
+                            <img src="uploads/<?php echo htmlspecialchars($row['books_img']); ?>" alt="<?php echo htmlspecialchars($row['title']); ?> cover" style="max-width: 50px; height: auto;">
+                        <?php else: ?>
+                            No image
+                        <?php endif; ?>
+                    </td>
+                    <td><?php echo htmlspecialchars($row['title']); ?></td>
+                    <td><?php echo htmlspecialchars($row['author_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['genre_name']); ?></td>
+                    <td><?php echo number_format($row['avg_rating'], 1); ?>/5</td>
+                    <td><a href="books/view.php?book_id=<?php echo $row['book_id']; ?>">View</a></td>
+                </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="6">No rated books yet.</td>
+            </tr>
+        <?php endif; ?>
+    </table>
+<?php endif; ?>
+
+<!-- ძირითადი წიგნების სია -->
 <h2>Books</h2>
 <table>
     <tr>
